@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Картка списку</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <header class="bg-primary text-white text-center py-3">
+        <h1>Картка списку</h1>
+    </header>
+
+    <main class="container mt-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Інформація про список</h5>
+                <div class="mb-3">
+                    <label class="form-label">ID:</label>
+                    <span id="list-id"></span>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Назва:</label>
+                    <input type="text" id="list-name" class="form-control" disabled>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Автор:</label>
+                    <input type="text" id="list-author" class="form-control" disabled>
+                </div>
+                <button class="btn btn-primary" id="edit-btn" onclick="toggleEditing()">Редагувати</button>
+                <button class="btn btn-success" onclick="updateList()" disabled id="save-btn">Зберегти зміни</button>
+                <button class="btn btn-danger" onclick="deleteList()">Видалити список</button>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-light text-center py-3 mt-4">
+        <p>&copy; 2025 Finance Tracker</p>
+    </footer>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const listId = urlParams.get('id');
+        let originalName = "";
+    
+        async function fetchList() {
+            try {
+                const response = await fetch(`http://127.0.0.1:8000/lists/${listId}`);
+                const list = await response.json();
+                document.getElementById('list-id').textContent = list.id;
+                document.getElementById('list-name').value = list.name;
+                document.getElementById('list-author').value = list.author;
+                originalName = list.name;
+            } catch (error) {
+                console.error('Помилка завантаження списку:', error);
+            }
+        }
+    
+        function toggleEditing() {
+            const nameInput = document.getElementById('list-name');
+            const saveBtn = document.getElementById('save-btn');
+            const editBtn = document.getElementById('edit-btn');
+    
+            if (nameInput.disabled) {
+                nameInput.disabled = false;
+                saveBtn.disabled = false;
+                editBtn.textContent = "Скасувати";
+            } else {
+                nameInput.value = originalName;
+                nameInput.disabled = true;
+                saveBtn.disabled = true;
+                editBtn.textContent = "Редагувати";
+            }
+        }
+    
+        function updateList() {
+            const name = document.getElementById('list-name').value;
+    
+            fetch(`http://127.0.0.1:8000/lists/${listId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
+            })
+            .then(() => {
+                alert('Список оновлено!');
+                document.getElementById('list-name').disabled = true;
+                document.getElementById('save-btn').disabled = true;
+                document.getElementById('edit-btn').textContent = "Редагувати";
+                originalName = name;
+            })
+            .catch(error => console.error('Помилка оновлення:', error));
+        }
+    
+        function setupWebSocket() {
+            const socket = new WebSocket(`ws://127.0.0.1:8000/lists/ws/${listId}`);
+    
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                if (data.list_id == listId) {
+                    document.getElementById('list-name').value = data.new_name;
+                    originalName = data.new_name;
+                    document.getElementById('list-name').disabled = true;
+                    document.getElementById('save-btn').disabled = true;
+                    document.getElementById('edit-btn').textContent = "Редагувати";
+                }
+            };
+    
+            socket.onclose = function() {
+                console.warn("WebSocket закрито, перепідключення...");
+                setTimeout(setupWebSocket, 3000); // Повторне підключення через 3 секунди
+            };
+        }
+    
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchList();
+            setupWebSocket();
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

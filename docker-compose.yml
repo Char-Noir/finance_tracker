@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_finance_tracker
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: finance_db
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: 1234
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+  backend:
+    build:
+      context: ./backend
+    container_name: backend_finance_tracker
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
+    environment:
+      DATABASE_URL: mysql+asyncmy://admin:1234@mysql_finance_tracker:3306/finance_db
+  frontend:
+    image: nginx:latest
+    container_name: frontend_finance_tracker
+    restart: always
+    ports:
+      - "8080:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+
+
+
+volumes:
+  mysql_data:
+
