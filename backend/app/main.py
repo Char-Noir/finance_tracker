@@ -1,4 +1,7 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.middleware.httpsredirect import HTTPSRedirectMiddleware
 
 from app.routers import data_sources
 from app.routers import transaction_source_categories
@@ -11,8 +14,6 @@ from app.database import initialize_database
 
 app = FastAPI()
 
-
-
 @app.on_event("startup")
 async def startup_event():
     await initialize_database()
@@ -21,6 +22,16 @@ async def startup_event():
 async def read_root():
     return {"message": "Pong"}
 
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(data_sources.router)
 app.include_router(transaction_source_categories.router)
 app.include_router(transaction_sources.router)
@@ -28,12 +39,6 @@ app.include_router(financial_transactions.router)
 app.include_router(upload_transactions.router)
 app.include_router(list_router.router)
 
-from fastapi.middleware.cors import CORSMiddleware
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Дозволити всі джерела (можете обмежити конкретними доменами)
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, forwarded_allow_ips="*", proxy_headers=True)

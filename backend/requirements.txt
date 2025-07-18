@@ -1,9 +1,9 @@
 fastapi
 uvicorn
 sqlalchemy
-mysql-connector-python
+psycopg2-binary
+asyncpg
 python-dotenv
-asyncmy
 cryptography
 pandas
 python-multipart
