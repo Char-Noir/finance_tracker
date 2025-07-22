@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}Transaction Source Categories{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>Transaction Source Categories</h1>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">Add New</button>
+    </div>
+
+    <table class="table table-bordered text-center">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Color</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for category in categories %}
+            <tr style="background-color: {{ category.color }}; color: {{ get_contrast_color(category.color) }};">
+                <td>{{ category.id }}</td>
+                <td>{{ category.name }}</td>
+                <td>
+                    <div style="width: 20px; height: 20px; background-color: {{ category.color }}; border: 1px solid #000; margin: 0 auto;"></div>
+                </td>
+                <td>
+                    <button class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#updateModal-{{ category.id }}">Update</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteCategory({{ category.id }})">Delete</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Add Modal -->
+    <div class="modal fade" id="addModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addForm">
+                        <div class="mb-3">
+                            <label for="addName" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="addName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="addColor" class="form-label">Color</label>
+                            <input type="color" class="form-control form-control-color" id="addColor" value="#ffffff">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Modals -->
+    {% for category in categories %}
+    <div class="modal fade" id="updateModal-{{ category.id }}" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Update Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form class="updateForm" data-id="{{ category.id }}">
+                        <div class="mb-3">
+                            <label for="updateName-{{ category.id }}" class="form-label">Name</label>
+                            <input type="text" class="form-control" id="updateName-{{ category.id }}" value="{{ category.name }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="updateColor-{{ category.id }}" class="form-label">Color</label>
+                            <input type="color" class="form-control form-control-color" id="updateColor-{{ category.id }}" value="{{ category.color }}">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+<script>
+    const apiUrl = "/api/transaction-source-categories";
+
+    document.getElementById("addForm").addEventListener("submit", async function(e) {
+        e.preventDefault();
+        const name = document.getElementById("addName").value.trim();
+        const color = document.getElementById("addColor").value;
+        try {
+            const response = await fetch(apiUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, color })
+            });
+            if (!response.ok) throw new Error('Failed to add');
+            location.reload();
+        } catch (error) {
+            console.error("Error:", error);
+        }
+    });
+
+    document.querySelectorAll(".updateForm").forEach(form => {
+        form.addEventListener("submit", async function(e) {
+            e.preventDefault();
+            const id = form.dataset.id;
+            const name = document.getElementById(`updateName-${id}`).value.trim();
+            const color = document.getElementById(`updateColor-${id}`).value;
+            try {
+                const response = await fetch(`${apiUrl}/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, color })
+                });
+                if (!response.ok) throw new Error('Failed to update');
+                location.reload();
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        });
+    });
+
+    async function deleteCategory(id) {
+        if (confirm('Are you sure you want to delete this item?')) {
+            try {
+                const response = await fetch(`${apiUrl}/${id}`, { method: "DELETE" });
+                if (!response.ok) throw new Error('Failed to delete');
+                location.reload();
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+    }
+</script>
+{% endblock %}
+
+{% macro get_contrast_color(hex_color) -%}
+    {% set r = (hex_color[1:3] | int(base=16)) %}
+    {% set g = (hex_color[3:5] | int(base=16)) %}
+    {% set b = (hex_color[5:7] | int(base=16)) %}
+    {% if (r * 299 + g * 587 + b * 114) / 1000 >= 128 %}
+        black
+    {% else %}
+        white
+    {% endif %}
+{%- endmacro %}

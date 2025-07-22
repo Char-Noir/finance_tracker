@@ -1,0 +1,13 @@
+flask
+sqlalchemy
+psycopg2-binary
+asyncpg
+python-dotenv
+cryptography
+pandas
+python-multipart
+websockets
+gunicorn
+uvicorn
+pydantic
+asgiref
