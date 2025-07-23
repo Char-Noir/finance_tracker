@@ -8,11 +8,10 @@ class TransactionSourceService:
         db = SessionLocal()
         return TransactionSourceRepository(db), db
 
-    async def get_all(self):
+    async def get_all(self, uncategorized: bool = False, sort_by: str = 'id', sort_order: str = 'asc'):
         repository, db = await self._create_repository()
         async with db:
-            # This method returns a list of dicts, which is fine for the template.
-            return await repository.get_all()
+            return await repository.get_all(uncategorized, sort_by, sort_order)
     
     async def get_all_sh(self):
         repository, db = await self._create_repository()

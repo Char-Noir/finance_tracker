@@ -13,10 +13,20 @@ page_router = Blueprint('transaction_sources_pages', __name__)
 async def get_all_page():
     source_service = TransactionSourceService()
     category_service = TransactionSourceCategoryService()
-    sources = await source_service.get_all()
+    
+    uncategorized_filter = request.args.get('uncategorized', 'false').lower() == 'true'
+    sort_by = request.args.get('sort_by', 'id')  # Default sort by id
+    sort_order = request.args.get('sort_order', 'asc') # Default sort order ascending
+
+    sources = await source_service.get_all(uncategorized=uncategorized_filter, sort_by=sort_by, sort_order=sort_order)
     categories_schemas = await category_service.get_all()
     categories = [c.dict() for c in categories_schemas]
-    return render_template('transaction_sources.html', sources=sources, categories=categories)
+    return render_template('transaction_sources.html', 
+                           sources=sources, 
+                           categories=categories, 
+                           uncategorized_filter=uncategorized_filter,
+                           sort_by=sort_by,
+                           sort_order=sort_order)
 
 @api_router.route('/', methods=['GET'])
 async def get_all_api():

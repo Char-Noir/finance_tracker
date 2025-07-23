@@ -30,7 +30,7 @@ class UploadTransactionsService:
                     source = await self.source_repo.get_by_details(details)
                     if not source:
                        source = await self.source_repo.create(
-                        TransactionSourceCreate(name=details, alt_name=None, category_id=0)
+                        TransactionSourceCreate(name=details, alt_name=None, category_id=None)
                         )
 
                     exists = await self.transaction_repo.exists(data_source_id, source.id, date)

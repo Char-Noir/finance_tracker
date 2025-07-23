@@ -8,10 +8,28 @@ class TransactionSourceRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all(self):
-        result = await self.db.execute(
-            select(TransactionSource).options(joinedload(TransactionSource.category))
-        )
+    async def get_all(self, uncategorized: bool = False, sort_by: str = 'id', sort_order: str = 'asc'):
+        query = select(TransactionSource).options(joinedload(TransactionSource.category))
+        if uncategorized:
+            query = query.where(TransactionSource.category_id == None)
+        
+        # Define sortable columns
+        sortable_columns = {
+            'id': TransactionSource.id,
+            'name': TransactionSource.name,
+            'alt_name': TransactionSource.alt_name,
+            'category': TransactionSource.category_id # Sort by category_id for now
+        }
+
+        # Apply sorting
+        if sort_by in sortable_columns:
+            column_to_sort = sortable_columns[sort_by]
+            if sort_order == 'desc':
+                query = query.order_by(column_to_sort.desc())
+            else:
+                query = query.order_by(column_to_sort.asc())
+        
+        result = await self.db.execute(query)
         return [
             {
                 "id": source.id,

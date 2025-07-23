@@ -7,7 +7,14 @@
 
     <!-- Filter Form -->
     <form id="filter-form" class="row g-3 mb-4" method="get" action="{{ request.path }}">
-        <!-- Filter fields will be added here later if needed -->
+        <div class="col-md-3">
+            <label for="startDate" class="form-label">Start Date</label>
+            <input type="date" class="form-control" id="startDate" name="start_date" value="{{ request.args.get('start_date', '') }}">
+        </div>
+        <div class="col-md-3">
+            <label for="endDate" class="form-label">End Date</label>
+            <input type="date" class="form-control" id="endDate" name="end_date" value="{{ request.args.get('end_date', '') }}">
+        </div>
         <div class="col-12">
             <button type="submit" class="btn btn-primary">Apply Filters</button>
         </div>
@@ -16,11 +23,11 @@
     <table class="table table-bordered table-striped text-center">
         <thead>
             <tr>
-                <th>Date</th>
-                <th>Source</th>
-                <th>Category</th>
-                <th>Bank</th>
-                <th>Amount (UAH)</th>
+                <th data-sort-by="date" class="sortable">Date <span class="sort-arrow"></span></th>
+                <th data-sort-by="source" class="sortable">Source <span class="sort-arrow"></span></th>
+                <th data-sort-by="category" class="sortable">Category <span class="sort-arrow"></span></th>
+                <th data-sort-by="bank" class="sortable">Bank <span class="sort-arrow"></span></th>
+                <th data-sort-by="amount" class="sortable">Amount (UAH) <span class="sort-arrow"></span></th>
             </tr>
         </thead>
         <tbody>
@@ -53,4 +60,11 @@
         </ul>
     </nav>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+    currentSortBy = "{{ request.args.get('sort', 'date') }}";
+    currentSortOrder = "{{ request.args.get('order', 'asc') }}";
+</script>
 {% endblock %}
